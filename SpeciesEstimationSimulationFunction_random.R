@@ -13,7 +13,7 @@
 #        group types represented in regional species pool.
 #     4. Currently this function only allows for two different collection methods.
 #     5. The number of species caught (N) for each sampling event is independent
-#        of collection method and is randomly drawn from negative bindomial distribution (size = 25,mu = 225)) 
+#        of collection method and is randomly drawn from negative binomial distribution (size = 25,mu = 225)) 
 
 #   Input objects:
 #     SR - true regional species richness (integer)
