@@ -3,3 +3,4 @@ Model and concomitant functions for estimating species richness based on samples
 
 Files include:
   1. JAGS model
+  2. Simulation function
