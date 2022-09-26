@@ -1,2 +1,5 @@
 # SpeciesRichnessEstimator
-Model and concomitant functions for estimating species richness baesd on samples using mutliple collection methods
+Model and concomitant functions for estimating species richness based on samples using multiple collection methods
+
+Files include:
+  1. JAGS model
