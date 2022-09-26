@@ -1,0 +1,86 @@
+model {
+    #switch values
+    intercept.switch <- int.switch
+    grp.switch <- group.switch
+    
+    # Prior distributions
+    omega ~ dbeta(3.5, 2)         # Inclusion probability
+	  #omega ~ dnorm(0, 0.37)         # Inclusion probability
+	  Beta.ab ~ dnorm(0, 0.37)
+	  lg.omega <- log(omega/(1-omega))
+	  
+    for (g in 1:n.Geartypes){
+    
+    lp.mu[g] ~ dnorm(0, 0.37)      # Mean of detection probability (logit scale) 
+	  lp.sd[g] ~ dunif(0, 10)        # SD of detection probability among species (logit scale)
+    lp.tau[g] <- pow(lp.sd[g], -2)    # precision 
+    
+    #mean p (intercept) across species
+    alpha[g] ~ dnorm(lp.mu[g], lp.tau[g])
+    
+    # group type detection probability priors
+    #mean
+    for(t in 1:n.type){
+    beta.group[g,t] <- log(beta[g,t]/(1-beta[g,t]))
+    beta[g,t] ~ dunif(0,1)
+    
+    #precision
+    tau.beta[g,t] <- (1/(sigma.beta[g,t]*sigma.beta[g,t]))
+    sigma.beta[g,t] ~ dunif(0,10)
+    }#i
+  }#g
+  
+    # Dirichlet prior distribution for augmented data type
+    for(t in 1:n.type){
+    a[t] ~ dgamma(1,1)
+    group[t] <- a[t]/sum(a[])
+    }#i
+      
+    # inclusion probability parameter estimate
+    Psi <- 1/(1+exp(-(lg.omega + Beta.ab*log(Abundance))))
+      
+    # Zero-inflated binomial mixture model for the augmented data
+    for (i in 1:(c+nz)) {
+    
+      # Inclusion indicator
+      z[i] ~ dbern(Psi)
+      
+      # Draw a group type value for any augmented size variable
+      type[i] ~ dcat(group[])
+      
+      for(g in 1:n.Geartypes){
+      
+      # Sample detection probability for group type i from normal distribution (logit scale)
+      B.p[i,g] ~ dnorm(beta.group[g,type[i]], tau.beta[g,type[i]])
+      
+      # (inverse) link function ... p varies by species
+      p[i,g] <- 1 / (1 + exp(-((alpha[g]*intercept.switch) + (B.p[i,g]*grp.switch))))
+
+      # Mixture
+      mu[i,g] <- z[i] * p[i,g]
+
+      # Incidence data
+      y[i,g] ~ dbin(mu[i,g], J[g])
+      }#g
+      }#i
+
+    # N is a derived parameter under data augmentation
+    N <- sum(z[])
+    
+    for(t in 1:n.type){
+    for(i in 1:(c+nz)){
+    total.type[i,t]<-ifelse((z[i]*abs(type[i]-t))==0,0,1)
+    }#i
+    total.t[t]<-sum(total.type[,t]) #sum of number of not time t individuals
+    propT[t] <- 1-(total.t[t]/sum(z[]))
+    }#t
+
+    # Average detection probability across species
+    for(g in 1:n.Geartypes){
+    for(t in 1:n.type){
+    meanp[g,t] <- 1 / (1 + exp(-((lp.mu[g]*intercept.switch)+(beta.group[g,t]*grp.switch))))
+    
+    }#t
+    }#g
+    
+}
